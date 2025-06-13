@@ -61,22 +61,70 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
     }
   }
 
-  /// Process text with loading indicator
+  /// Process text with loading indicator - COMPLETELY REWRITTEN
   Future<void> _processTextWithLoading(String text) async {
+    print('🔄 Starting text processing, setting _isProcessing = true');
+
+    // Step 1: Show loading indicator
     setState(() {
       _isProcessing = true;
     });
 
-    try {
-      // Process text in background
-      await _textProcessingService.processTextWithoutClosing(text);
+    // Step 2: Force UI update and wait
+    await Future.delayed(Duration(milliseconds: 200));
+    print('🎨 Loading indicator should be visible now');
 
-      // Success - close app after brief delay
-      await Future.delayed(Duration(milliseconds: 1000));
+    // Step 3: Start API call but don't await it yet
+    print('📝 Starting API call for text: $text');
+    final apiCallFuture =
+        _textProcessingService.processTextWithoutClosing(text);
+
+    // Step 4: Wait for EITHER 2 seconds OR API completion, whichever is longer
+    final minimumDisplayTime = Duration(seconds: 2);
+    final startTime = DateTime.now();
+
+    try {
+      // Wait for API call to complete
+      await apiCallFuture;
+      print('✅ API call completed');
+
+      // Check if we need to wait longer for minimum display time
+      final elapsed = DateTime.now().difference(startTime);
+      if (elapsed < minimumDisplayTime) {
+        final remainingTime = minimumDisplayTime - elapsed;
+        print(
+            '⏳ Waiting ${remainingTime.inMilliseconds}ms more for minimum display time');
+        await Future.delayed(remainingTime);
+      }
+
+      print('🏁 Hiding loading indicator');
+      setState(() {
+        _isProcessing = false;
+      });
+
+      // Give user time to see the success toast
+      await Future.delayed(Duration(milliseconds: 1500));
+      print('🚪 Closing app');
       IntentService.closeApp();
     } catch (e) {
-      // Error - close app after showing error
-      await Future.delayed(Duration(milliseconds: 2000));
+      print('❌ API call failed: $e');
+
+      // For errors, still respect minimum display time
+      final elapsed = DateTime.now().difference(startTime);
+      final minimumErrorTime = Duration(milliseconds: 1500);
+      if (elapsed < minimumErrorTime) {
+        final remainingTime = minimumErrorTime - elapsed;
+        await Future.delayed(remainingTime);
+      }
+
+      print('🏁 Hiding loading indicator (error)');
+      setState(() {
+        _isProcessing = false;
+      });
+
+      // Give user time to see error toast
+      await Future.delayed(Duration(milliseconds: 2500));
+      print('🚪 Closing app (error)');
       IntentService.closeApp();
     }
   }
@@ -105,37 +153,61 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If from text selection - always show invisible widget
+    print(
+        '🏗️ Building UI - _isFromTextSelection: $_isFromTextSelection, _isProcessing: $_isProcessing');
+
+    // If from text selection - show loading overlay when processing
     if (_isFromTextSelection) {
       return Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            // Invisible base
+            // Invisible base container
             Container(width: 0, height: 0),
 
-            // Show loading indicator only when processing
+            // Loading overlay - ALWAYS show when _isProcessing is true
             if (_isProcessing)
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
-                      strokeWidth: 3,
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.black.withOpacity(0.1), // Much lighter overlay
+                child: Center(
+                  child: Container(
+                    width: 100,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFFA45C40)),
+                            strokeWidth: 3,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Fixing...',
+                          style: TextStyle(
+                            color: Color(0xFF4A3933),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

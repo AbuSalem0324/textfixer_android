@@ -18,8 +18,7 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:finishOnTaskLaunch="true"
-            android:clearTaskOnLaunch="true"
-            android:screenOrientation="behind">
+            android:clearTaskOnLaunch="true">
             
             <!-- Standard launcher intent -->
             <intent-filter android:autoVerify="true">

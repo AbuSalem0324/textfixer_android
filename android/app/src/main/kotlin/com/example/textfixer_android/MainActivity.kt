@@ -1,6 +1,7 @@
 package com.example.textfixer_android
 
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
@@ -10,22 +11,29 @@ class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.textfixer.android/intent"
     private var selectedText: String? = null
 
+    override fun getBackgroundMode(): BackgroundMode {
+        // Make Flutter background transparent for text processing intents
+        return if (intent?.action == Intent.ACTION_PROCESS_TEXT || intent?.action == Intent.ACTION_SEND) {
+            BackgroundMode.transparent
+        } else {
+            BackgroundMode.opaque
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // If this is a text processing intent, make the activity completely invisible
+        // If this is a text processing intent, configure for transparency
         if (intent?.action == Intent.ACTION_PROCESS_TEXT || intent?.action == Intent.ACTION_SEND) {
-            // Make window completely transparent
+            // Make window transparent
             window.statusBarColor = android.graphics.Color.TRANSPARENT
             window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            
+            // Don't steal focus
             window.setFlags(
-                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
             )
-            // Make it a floating window that doesn't cover the screen
-            window.setGravity(android.view.Gravity.TOP or android.view.Gravity.START)
-            window.attributes.width = 1
-            window.attributes.height = 1
         }
         
         handleIntent(intent)

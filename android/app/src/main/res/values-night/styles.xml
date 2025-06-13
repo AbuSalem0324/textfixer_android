@@ -29,5 +29,8 @@
         <item name="android:windowSoftInputMode">stateHidden</item>
         <item name="android:windowShowWallpaper">true</item>
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@null</item>
     </style>
 </resources>
