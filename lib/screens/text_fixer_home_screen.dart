@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '/storage_service.dart';
-import '../service/services/intent_service.dart';
-import '../service/services/text_processing_service.dart';
-import '../service/widgets/setup_dialog.dart';
-import '../service/widgets/processing_overlay.dart';
+import '../services/intent_service.dart';
+import '../services/text_processing_service.dart';
+import '/widgets/setup_dialog.dart';
+import '/widgets/processing_overlay.dart';
 import '../service/widgets/main_app_ui.dart';
 
 class TextFixerHomeScreen extends StatefulWidget {

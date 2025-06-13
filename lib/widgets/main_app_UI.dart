@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/setup_dialog.dart';
-import '../services/text_processing_service.dart';
+import '/services/text_processing_service.dart';
 
 class MainAppUI extends StatelessWidget {
   final String? apiKey;

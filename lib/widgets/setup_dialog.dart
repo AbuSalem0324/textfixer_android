@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '/storage_service.dart';
-import '../services/intent_service.dart';
+import '../../services/intent_service.dart';
 
 class SetupDialog extends StatefulWidget {
   final bool isFromTextSelection;
