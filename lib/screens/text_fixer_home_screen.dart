@@ -3,8 +3,7 @@ import '/storage_service.dart';
 import '../services/intent_service.dart';
 import '../services/text_processing_service.dart';
 import '/widgets/setup_dialog.dart';
-import '/widgets/processing_overlay.dart';
-import '../service/widgets/main_app_ui.dart';
+import '../widgets/main_app_ui.dart';
 
 class TextFixerHomeScreen extends StatefulWidget {
   @override
@@ -49,8 +48,10 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
         });
 
         if (_apiKey != null) {
-          // Process immediately without showing UI
-          await _textProcessingService.processTextInBackground(intentText);
+          // Process immediately and close app - no UI needed
+          _textProcessingService.processTextInBackground(intentText);
+          // Don't await - let it run in background and close immediately
+          IntentService.closeApp();
         } else {
           // Show setup dialog only if no API key
           _showSetupDialog();
@@ -85,12 +86,29 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If we came from text selection, show loading widget
-    if (_isFromTextSelection) {
-      return ProcessingOverlay();
+    // If we came from text selection and have API key, show invisible/transparent widget
+    // The actual processing happens in background with toasts
+    if (_isFromTextSelection && _apiKey != null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Container(), // Empty invisible container
+      );
     }
 
-    // Full app interface (only when opened directly)
+    // Show setup dialog if from text selection but no API key
+    if (_isFromTextSelection && _apiKey == null) {
+      // Return a minimal scaffold while dialog shows
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
+          ),
+        ),
+      );
+    }
+
+    // Full app interface (only when opened directly from launcher)
     return MainAppUI(
       apiKey: _apiKey,
       onSetupRequested: _showSetupDialog,

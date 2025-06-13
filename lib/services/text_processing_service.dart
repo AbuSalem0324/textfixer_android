@@ -28,19 +28,12 @@ class TextProcessingService {
       // Show success toast
       ToastService.showSuccess(
           result['userMessage'] ?? 'Text fixed and copied to clipboard!');
-
-      // Close app after showing success
-      await Future.delayed(Duration(milliseconds: 1200));
-      IntentService.closeApp();
     } catch (e) {
       // Show error toast
       String errorMessage = _formatErrorMessage(e.toString());
       ToastService.showError(errorMessage);
-
-      // Close app after showing error
-      await Future.delayed(Duration(milliseconds: 2500));
-      IntentService.closeApp();
     }
+    // Note: We don't close the app here anymore - it's handled by the caller
   }
 
   /// Test text processing functionality

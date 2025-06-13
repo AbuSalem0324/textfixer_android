@@ -5,7 +5,6 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.textfixer.android/intent"
@@ -14,8 +13,12 @@ class MainActivity: FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Show toast to confirm our MainActivity is running
-        Toast.makeText(this, "TextFixer MainActivity loaded", Toast.LENGTH_SHORT).show()
+        // If this is a text processing intent, make the activity invisible
+        if (intent?.action == Intent.ACTION_PROCESS_TEXT || intent?.action == Intent.ACTION_SEND) {
+            // Make activity completely transparent and finish quickly
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        }
         
         handleIntent(intent)
     }
@@ -49,12 +52,10 @@ class MainActivity: FlutterActivity() {
             Intent.ACTION_PROCESS_TEXT -> {
                 selectedText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
                 android.util.Log.d("TextFixer", "PROCESS_TEXT: $selectedText")
-                Toast.makeText(this, "Text received: $selectedText", Toast.LENGTH_LONG).show()
             }
             Intent.ACTION_SEND -> {
                 selectedText = intent.getStringExtra(Intent.EXTRA_TEXT)
                 android.util.Log.d("TextFixer", "SEND: $selectedText")
-                Toast.makeText(this, "Shared text: $selectedText", Toast.LENGTH_LONG).show()
             }
             else -> {
                 android.util.Log.d("TextFixer", "Other intent: ${intent?.action}")
