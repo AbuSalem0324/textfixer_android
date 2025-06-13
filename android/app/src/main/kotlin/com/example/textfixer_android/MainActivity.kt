@@ -13,11 +13,19 @@ class MainActivity: FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // If this is a text processing intent, make the activity invisible
+        // If this is a text processing intent, make the activity completely invisible
         if (intent?.action == Intent.ACTION_PROCESS_TEXT || intent?.action == Intent.ACTION_SEND) {
-            // Make activity completely transparent and finish quickly
+            // Make window completely transparent
             window.statusBarColor = android.graphics.Color.TRANSPARENT
             window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            window.setFlags(
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            )
+            // Make it a floating window that doesn't cover the screen
+            window.setGravity(android.view.Gravity.TOP or android.view.Gravity.START)
+            window.attributes.width = 1
+            window.attributes.height = 1
         }
         
         handleIntent(intent)

@@ -14,7 +14,7 @@ class ToastService {
     );
   }
 
-  /// Show a success toast
+  /// Show a success toast (short duration)
   static void showSuccess(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -26,7 +26,19 @@ class ToastService {
     );
   }
 
-  /// Show an error toast
+  /// Show a success toast with longer duration for important messages
+  static void showSuccessLong(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.TOP,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
+  /// Show an error toast (always long duration)
   static void showError(String message) {
     Fluttertoast.showToast(
       msg: message,

@@ -3,7 +3,7 @@ import '/storage_service.dart';
 import '../services/intent_service.dart';
 import '../services/text_processing_service.dart';
 import '/widgets/setup_dialog.dart';
-import '../widgets/main_app_ui.dart';
+import '/widgets/main_app_ui.dart';
 
 class TextFixerHomeScreen extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
 
   String? _apiKey;
   bool _isFromTextSelection = false;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -48,10 +49,8 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
         });
 
         if (_apiKey != null) {
-          // Process immediately and close app - no UI needed
-          _textProcessingService.processTextInBackground(intentText);
-          // Don't await - let it run in background and close immediately
-          IntentService.closeApp();
+          // Start processing in background with loading indicator
+          await _processTextWithLoading(intentText);
         } else {
           // Show setup dialog only if no API key
           _showSetupDialog();
@@ -59,6 +58,26 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
       }
     } catch (e) {
       print('Error getting intent text: $e');
+    }
+  }
+
+  /// Process text with loading indicator
+  Future<void> _processTextWithLoading(String text) async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // Process text in background
+      await _textProcessingService.processTextWithoutClosing(text);
+
+      // Success - close app after brief delay
+      await Future.delayed(Duration(milliseconds: 1000));
+      IntentService.closeApp();
+    } catch (e) {
+      // Error - close app after showing error
+      await Future.delayed(Duration(milliseconds: 2000));
+      IntentService.closeApp();
     }
   }
 
@@ -76,7 +95,7 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
           if (_isFromTextSelection) {
             final intentText = await IntentService.getIntentText();
             if (intentText != null) {
-              await _textProcessingService.processTextInBackground(intentText);
+              await _processTextWithLoading(intentText);
             }
           }
         },
@@ -86,24 +105,42 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If we came from text selection and have API key, show invisible/transparent widget
-    // The actual processing happens in background with toasts
-    if (_isFromTextSelection && _apiKey != null) {
+    // If from text selection - always show invisible widget
+    if (_isFromTextSelection) {
       return Scaffold(
         backgroundColor: Colors.transparent,
-        body: Container(), // Empty invisible container
-      );
-    }
+        body: Stack(
+          children: [
+            // Invisible base
+            Container(width: 0, height: 0),
 
-    // Show setup dialog if from text selection but no API key
-    if (_isFromTextSelection && _apiKey == null) {
-      // Return a minimal scaffold while dialog shows
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
-          ),
+            // Show loading indicator only when processing
+            if (_isProcessing)
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       );
     }
