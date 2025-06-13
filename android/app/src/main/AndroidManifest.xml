@@ -10,12 +10,15 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:launchMode="singleTask"
+            android:theme="@style/TransparentTheme"
             android:windowSoftInputMode="adjustResize"
             android:label="TextFixer"
             android:noHistory="true"
-            android:excludeFromRecents="true">
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:finishOnTaskLaunch="true"
+            android:clearTaskOnLaunch="true">
             
             <!-- Standard launcher intent -->
             <intent-filter android:autoVerify="true">
@@ -30,9 +33,9 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
             
-            <!-- Handle share menu - FIXED VERSION -->
+            <!-- Handle share menu -->
             <intent-filter android:priority="50">
-                <action android:name="android.intent.action.SEND" />
+                <action android="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
@@ -46,12 +49,6 @@
             </intent-filter>
             
         </activity>
-        
-        <!-- Add this for better text processing support -->
-        <service
-            android:name=".TextProcessingService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false" />
         
         <meta-data
             android:name="flutterEmbedding"
