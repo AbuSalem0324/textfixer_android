@@ -36,16 +36,6 @@ class TextProcessingService {
     }
   }
 
-  /// Test text processing functionality
-  Future<void> testTextProcessing() async {
-    await processTextInBackground("This is a test text with erors to fix.");
-  }
-
-  /// Process text in the background (example implementation)
-  Future<void> processTextInBackground(String text) async {
-    await processTextWithoutClosing(text);
-  }
-
   /// Format error message for user display
   String _formatErrorMessage(String error) {
     if (error.contains('Network') || error.contains('Connection')) {

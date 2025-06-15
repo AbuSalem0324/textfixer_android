@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/setup_dialog.dart';
-import '/services/text_processing_service.dart';
 
 class MainAppUI extends StatelessWidget {
   final String? apiKey;
@@ -14,8 +13,6 @@ class MainAppUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextProcessingService textProcessingService = TextProcessingService();
-
     return Scaffold(
       appBar: AppBar(
         title: Text('TextFixer'),
@@ -31,8 +28,6 @@ class MainAppUI extends StatelessWidget {
             _buildStatusCard(),
             SizedBox(height: 24),
             _buildInstructions(),
-            SizedBox(height: 24),
-            if (apiKey != null) _buildTestButton(textProcessingService),
           ],
         ),
       ),
@@ -100,6 +95,15 @@ class MainAppUI extends StatelessWidget {
               Icon(Icons.check_circle, color: Colors.green),
               SizedBox(height: 8),
               Text('Ready to fix text!'),
+              SizedBox(height: 8),
+              Text(
+                'Use the share menu in any app to fix text',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -116,23 +120,46 @@ class MainAppUI extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 12),
-        Text('1. Select text in any app'),
-        Text('2. Tap "Share" → "TextFixer"'),
-        Text('3. Your text gets fixed instantly!'),
-        Text('4. Fixed text is copied to clipboard'),
+        _buildInstructionStep('1', 'Select text in any app'),
+        _buildInstructionStep('2', 'Tap "Share" → "TextFixer"'),
+        _buildInstructionStep('3', 'Your text gets fixed instantly!'),
+        _buildInstructionStep('4', 'Fixed text is copied to clipboard'),
       ],
     );
   }
 
-  Widget _buildTestButton(TextProcessingService textProcessingService) {
-    return ElevatedButton.icon(
-      onPressed: () => textProcessingService.testTextProcessing(),
-      icon: Icon(Icons.play_arrow),
-      label: Text('Test TextFixer'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFA45C40),
-        foregroundColor: Colors.white,
-        padding: EdgeInsets.all(16),
+  Widget _buildInstructionStep(String number, String instruction) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Color(0xFFA45C40),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              instruction,
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
       ),
     );
   }
