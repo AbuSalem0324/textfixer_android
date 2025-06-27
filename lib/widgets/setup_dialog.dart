@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '/storage_service.dart';
-import '../../services/intent_service.dart';
+import '../services/intent_service.dart';
 
 class SetupDialog extends StatefulWidget {
   final bool isFromTextSelection;
@@ -13,12 +13,13 @@ class SetupDialog extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SetupDialogState createState() => _SetupDialogState();
+  State<SetupDialog> createState() => _SetupDialogState();
 }
 
 class _SetupDialogState extends State<SetupDialog> {
   final TextEditingController _controller = TextEditingController();
   final StorageService _storage = StorageService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -35,12 +36,30 @@ class _SetupDialogState extends State<SetupDialog> {
 
   Future<void> _handleSave() async {
     final apiKey = _controller.text.trim();
-    if (apiKey.isNotEmpty) {
-      await _storage.saveApiKey(apiKey);
-      Navigator.pop(context);
+    if (apiKey.isEmpty) return;
 
-      if (widget.onApiKeySaved != null) {
-        widget.onApiKeySaved!();
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _storage.saveApiKey(apiKey);
+
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onApiKeySaved?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save API key')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -48,35 +67,46 @@ class _SetupDialogState extends State<SetupDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Setup TextFixer'),
+      title: const Text('Setup TextFixer'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Enter your TextFixer API key:'),
-          SizedBox(height: 16),
+          const Text('Enter your TextFixer API key:'),
+          const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'Paste your API key here',
               border: OutlineInputBorder(),
             ),
             maxLines: 3,
+            enabled: !_isLoading,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'You can get your API key from textfixer.co.uk',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: _handleCancel,
-          child: Text('Cancel'),
+          onPressed: _isLoading ? null : _handleCancel,
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _handleSave,
-          child: Text('Save'),
+          onPressed: _isLoading ? null : _handleSave,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
         ),
       ],
     );
