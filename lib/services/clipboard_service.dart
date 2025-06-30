@@ -1,13 +1,17 @@
 import 'package:flutter/services.dart';
 
 class ClipboardService {
+  static const int _minTextLength = 10;
+  static const int _maxTextLength = 5000;
+  static const double _minAlphaRatio = 0.3;
+  static const int _defaultPreviewLength = 100;
+
   /// Get current clipboard content
   static Future<String?> getCurrentClipboardText() async {
     try {
       final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
-      return clipboardData?.text;
+      return clipboardData?.text?.trim();
     } catch (e) {
-      print('Error getting clipboard text: $e');
       return null;
     }
   }
@@ -17,7 +21,6 @@ class ClipboardService {
     try {
       await Clipboard.setData(ClipboardData(text: text));
     } catch (e) {
-      print('Error setting clipboard text: $e');
       throw Exception('Failed to copy text to clipboard');
     }
   }
@@ -26,14 +29,15 @@ class ClipboardService {
   static Future<bool> hasTextInClipboard() async {
     try {
       final text = await getCurrentClipboardText();
-      return text != null && text.trim().isNotEmpty;
+      return text != null && text.isNotEmpty;
     } catch (e) {
       return false;
     }
   }
 
   /// Get clipboard preview (first N characters)
-  static String getClipboardPreview(String text, {int maxLength = 100}) {
+  static String getClipboardPreview(String text,
+      {int maxLength = _defaultPreviewLength}) {
     if (text.length <= maxLength) {
       return text;
     }
@@ -44,16 +48,13 @@ class ClipboardService {
   static bool isTextWorthFixing(String text) {
     final trimmed = text.trim();
 
-    // Too short
-    if (trimmed.length < 10) return false;
+    // Length validation
+    if (trimmed.length < _minTextLength || trimmed.length > _maxTextLength) {
+      return false;
+    }
 
-    // Too long (over 5000 characters)
-    if (trimmed.length > 5000) return false;
-
-    // Contains mostly non-alphabetic characters
+    // Check alphabetic character ratio
     final alphaCount = trimmed.replaceAll(RegExp(r'[^a-zA-Z]'), '').length;
-    if (alphaCount < trimmed.length * 0.3) return false;
-
-    return true;
+    return alphaCount >= trimmed.length * _minAlphaRatio;
   }
 }

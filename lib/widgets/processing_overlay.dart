@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 class ProcessingOverlay extends StatelessWidget {
+  static const Color _brandColor = Color(0xFFA45C40);
+  static const Color _textDark = Color(0xFF4A3933);
+  static const Color _textLight = Color(0xFF847C74);
+
   const ProcessingOverlay({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.black.withOpacity(0.3), // Semi-transparent overlay
+      backgroundColor: Colors.black.withOpacity(0.3),
       body: Center(
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 60),
-          padding: EdgeInsets.all(24),
+          margin: const EdgeInsets.symmetric(horizontal: 60),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -19,15 +22,15 @@ class ProcessingOverlay extends StatelessWidget {
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 15,
-                offset: Offset(0, 8),
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Column(
+          child: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
+                valueColor: AlwaysStoppedAnimation<Color>(_brandColor),
                 strokeWidth: 3,
               ),
               SizedBox(height: 20),
@@ -35,7 +38,7 @@ class ProcessingOverlay extends StatelessWidget {
                 'Fixing your text...',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF4A3933),
+                  color: _textDark,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -44,7 +47,7 @@ class ProcessingOverlay extends StatelessWidget {
                 'Please wait',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF847C74),
+                  color: _textLight,
                 ),
               ),
             ],

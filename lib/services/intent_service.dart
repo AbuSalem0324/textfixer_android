@@ -8,9 +8,9 @@ class IntentService {
   static Future<String?> getIntentText() async {
     try {
       final String? text = await _platform.invokeMethod('getIntentText');
-      return text;
+      return text?.trim();
     } catch (e) {
-      print('Error getting intent text: $e');
+      // Silently handle errors in production
       return null;
     }
   }

@@ -1,4 +1,4 @@
-package com.example.textfixer_android
+package com.textfixer.android
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
@@ -6,6 +6,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
 import android.os.Bundle
+import android.graphics.Color
 
 class MainActivity: FlutterActivity() {
     companion object {
@@ -56,8 +57,8 @@ class MainActivity: FlutterActivity() {
 
     private fun configureTransparentWindow() {
         window.apply {
-            statusBarColor = android.graphics.Color.TRANSPARENT
-            navigationBarColor = android.graphics.Color.TRANSPARENT
+            statusBarColor = Color.TRANSPARENT
+            navigationBarColor = Color.TRANSPARENT
             setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -68,9 +69,9 @@ class MainActivity: FlutterActivity() {
     private fun handleIntent(intent: Intent?) {
         selectedText = when (intent?.action) {
             Intent.ACTION_PROCESS_TEXT -> 
-                intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+                intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()?.trim()
             Intent.ACTION_SEND -> 
-                intent.getStringExtra(Intent.EXTRA_TEXT)
+                intent.getStringExtra(Intent.EXTRA_TEXT)?.trim()
             else -> null
         }
     }

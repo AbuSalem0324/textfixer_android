@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.textfixer_android"
+    namespace = "com.textfixer.android"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 

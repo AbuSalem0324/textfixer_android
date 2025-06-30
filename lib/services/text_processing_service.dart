@@ -1,4 +1,3 @@
-import 'dart:async';
 import '/api_service.dart';
 import '/storage_service.dart';
 import '/models/clipboard_processing_result.dart';
@@ -12,114 +11,103 @@ class TextProcessingService {
 
   /// Process text without auto-closing (for loading screen control)
   Future<void> processTextWithoutClosing(String text) async {
-    final apiKey = await _storage.getApiKey();
-
-    if (apiKey == null) {
-      ToastService.showError('API key not found. Please set up TextFixer.');
-      throw Exception('No API key');
-    }
+    final apiKey = await _getApiKeyOrThrow();
 
     try {
       final result = await _api.fixText(apiKey, text);
-
-      // Copy to clipboard
       await IntentService.copyToClipboard(result['fixedText']);
-
-      // Show success toast with longer duration
       ToastService.showSuccessLong(
           result['userMessage'] ?? 'Text fixed and copied to clipboard!');
     } catch (e) {
-      // Show error toast
-      String errorMessage = _formatErrorMessage(e.toString());
-      ToastService.showError(errorMessage);
-
-      // Re-throw to let caller handle
-      throw e;
+      _handleAndRethrowError(e);
     }
   }
 
   /// Enhanced clipboard processing with result management
   Future<ClipboardProcessingResult> processClipboardTextWithResult() async {
-    final apiKey = await _storage.getApiKey();
+    final apiKey = await _getApiKeyOrThrow();
+    final originalText = await _getValidClipboardText();
 
-    if (apiKey == null) {
-      throw Exception('API key not found. Please set up TextFixer.');
+    return await _processTextAndCreateResult(
+        apiKey, originalText, 'Text processed successfully');
+  }
+
+  /// Re-process already edited text
+  Future<ClipboardProcessingResult> refixText(String textToRefix) async {
+    final apiKey = await _getApiKeyOrThrow();
+
+    if (textToRefix.trim().isEmpty) {
+      throw Exception('No text to process');
     }
 
-    // Get clipboard text
+    return await _processTextAndCreateResult(
+        apiKey, textToRefix, 'Text re-processed successfully');
+  }
+
+  /// Get API key or throw appropriate exception
+  Future<String> _getApiKeyOrThrow() async {
+    final apiKey = await _storage.getApiKey();
+    if (apiKey == null) {
+      ToastService.showError('API key not found. Please set up TextFixer.');
+      throw Exception('No API key');
+    }
+    return apiKey;
+  }
+
+  /// Get valid clipboard text or throw appropriate exception
+  Future<String> _getValidClipboardText() async {
     final originalText = await ClipboardService.getCurrentClipboardText();
 
     if (originalText == null || originalText.trim().isEmpty) {
       throw Exception('No text found in clipboard');
     }
 
-    // Check if text is worth processing
     if (!ClipboardService.isTextWorthFixing(originalText)) {
       throw Exception(
           'Text is too short or doesn\'t contain enough readable content');
     }
 
+    return originalText;
+  }
+
+  /// Process text with API and create result object
+  Future<ClipboardProcessingResult> _processTextAndCreateResult(
+    String apiKey,
+    String originalText,
+    String defaultMessage,
+  ) async {
     try {
-      // Process with API
       final result = await _api.fixText(apiKey, originalText);
 
-      // Return structured result for UI handling
       return ClipboardProcessingResult(
         originalText: originalText,
         fixedText: result['fixedText'] ?? originalText,
-        userMessage: result['userMessage'] ?? 'Text processed successfully',
+        userMessage: result['userMessage'] ?? defaultMessage,
         model: result['model'],
         originalLength: result['originalLength'],
         fixedLength: result['fixedLength'],
       );
     } catch (e) {
-      // Show error toast
-      String errorMessage = _formatErrorMessage(e.toString());
-      ToastService.showError(errorMessage);
-
-      // Re-throw to let caller handle
-      throw Exception(errorMessage);
+      _handleAndRethrowError(e);
     }
   }
 
-  /// Re-process already edited text
-  Future<ClipboardProcessingResult> refixText(String textToRefix) async {
-    final apiKey = await _storage.getApiKey();
-
-    if (apiKey == null) {
-      throw Exception('API key not found. Please set up TextFixer.');
-    }
-
-    if (textToRefix.trim().isEmpty) {
-      throw Exception('No text to process');
-    }
-
-    try {
-      final result = await _api.fixText(apiKey, textToRefix);
-
-      return ClipboardProcessingResult(
-        originalText: textToRefix,
-        fixedText: result['fixedText'] ?? textToRefix,
-        userMessage: result['userMessage'] ?? 'Text re-processed successfully',
-        model: result['model'],
-        originalLength: result['originalLength'],
-        fixedLength: result['fixedLength'],
-      );
-    } catch (e) {
-      // Show error toast
-      String errorMessage = _formatErrorMessage(e.toString());
-      ToastService.showError(errorMessage);
-
-      // Re-throw to let caller handle
-      throw Exception(errorMessage);
-    }
+  /// Handle errors consistently and rethrow
+  Never _handleAndRethrowError(dynamic error) {
+    final errorMessage = _formatErrorMessage(error.toString());
+    ToastService.showError(errorMessage);
+    throw Exception(errorMessage);
   }
 
   /// Format error message for user display
   String _formatErrorMessage(String error) {
-    if (error.contains('Network') || error.contains('Connection')) {
+    final cleanError = error.replaceAll('Exception: ', '');
+
+    if (cleanError.toLowerCase().contains('network') ||
+        cleanError.toLowerCase().contains('connection')) {
       return 'Network error. Please try again.';
     }
-    return error.replaceAll('Exception: ', '');
+
+    return cleanError;
   }
 }

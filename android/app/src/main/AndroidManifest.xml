@@ -5,7 +5,9 @@
     <application
         android:label="TextFixer"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false">
         
         <activity
             android:name=".MainActivity"
@@ -40,14 +42,6 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
             
-            <!-- Additional share intent for better compatibility -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:mimeType="text/*" />
-            </intent-filter>
-            
         </activity>
         
         <meta-data
@@ -55,6 +49,6 @@
             android:value="2" />
     </application>
     
-    <!-- Target newer SDK versions -->
+    <!-- Target SDK versions for production -->
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 </manifest>
