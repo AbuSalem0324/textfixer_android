@@ -59,10 +59,7 @@ class MainActivity: FlutterActivity() {
         window.apply {
             statusBarColor = Color.TRANSPARENT
             navigationBarColor = Color.TRANSPARENT
-            setFlags(
-                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            )
+            // Removed FLAG_NOT_FOCUSABLE to allow focus for keyboard input
         }
     }
 

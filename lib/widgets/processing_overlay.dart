@@ -5,12 +5,12 @@ class ProcessingOverlay extends StatelessWidget {
   static const Color _textDark = Color(0xFF4A3933);
   static const Color _textLight = Color(0xFF847C74);
 
-  const ProcessingOverlay({Key? key}) : super(key: key);
+  const ProcessingOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.3),
+      backgroundColor: Colors.black.withValues(alpha: 0.3),
       body: Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 60),
@@ -20,7 +20,7 @@ class ProcessingOverlay extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),

@@ -8,14 +8,14 @@ void main() {
 class TextFixerApp extends StatelessWidget {
   static const Color _brandColor = Color(0xFFA45C40);
 
-  const TextFixerApp({Key? key}) : super(key: key);
+  const TextFixerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TextFixer',
       theme: _buildAppTheme(),
-      home: TextFixerHomeScreen(),
+      home: const TextFixerHomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -1,9 +1,9 @@
 name: textfixer_android
-description: TextFixer Android app for AI-powered text correction
+description: AI-powered text correction and enhancement for Android. Fix grammar, spelling, and style instantly with advanced AI technology.
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.5.0+6
 
 environment:
   sdk: '>=2.19.0 <4.0.0'
@@ -14,6 +14,8 @@ dependencies:
   http: ^1.1.0
   shared_preferences: ^2.2.2
   fluttertoast: ^8.2.4
+  device_info_plus: ^10.1.0
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -22,4 +24,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
+
+  fonts:
+    - family: Noto Serif Display
+      fonts:
+        - asset: fonts/NotoSerifDisplay-Variable.ttf

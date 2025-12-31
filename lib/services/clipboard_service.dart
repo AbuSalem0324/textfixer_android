@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 class ClipboardService {
   static const int _minTextLength = 10;
-  static const int _maxTextLength = 5000;
+  static const int _maxTextLength = 500; // Default for free tier
   static const double _minAlphaRatio = 0.3;
   static const int _defaultPreviewLength = 100;
 
@@ -44,17 +44,38 @@ class ClipboardService {
     return '${text.substring(0, maxLength)}...';
   }
 
-  /// Check if text is worth processing
+  /// Check if text is worth processing (default free tier limit)
   static bool isTextWorthFixing(String text) {
+    return isTextWorthFixingWithLimit(text, _maxTextLength);
+  }
+
+  /// Check if text is worth processing with custom character limit
+  static bool isTextWorthFixingWithLimit(String text, int maxLength) {
     final trimmed = text.trim();
 
     // Length validation
-    if (trimmed.length < _minTextLength || trimmed.length > _maxTextLength) {
+    if (trimmed.length < _minTextLength) {
+      return false;
+    }
+
+    if (trimmed.length > maxLength) {
       return false;
     }
 
     // Check alphabetic character ratio
     final alphaCount = trimmed.replaceAll(RegExp(r'[^a-zA-Z]'), '').length;
     return alphaCount >= trimmed.length * _minAlphaRatio;
+  }
+
+  /// Get character limit error message
+  static String getCharacterLimitMessage(String text, int limit) {
+    final length = text.trim().length;
+    if (length < _minTextLength) {
+      return 'Text too short. Minimum $_minTextLength characters required.';
+    }
+    if (length > limit) {
+      return 'Text too long. Maximum $limit characters allowed for your plan.';
+    }
+    return 'Text doesn\'t contain enough readable content.';
   }
 }

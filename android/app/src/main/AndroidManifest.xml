@@ -14,7 +14,6 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/TransparentTheme"
-            android:windowSoftInputMode="adjustResize"
             android:label="TextFixer"
             android:noHistory="true"
             android:excludeFromRecents="true"
@@ -50,5 +49,5 @@
     </application>
     
     <!-- Target SDK versions for production -->
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35" />
 </manifest>

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
-import '/storage_service.dart';
+import '../storage_service.dart';
 import '../services/intent_service.dart';
 import '../services/text_processing_service.dart';
-import '/widgets/setup_dialog.dart';
-import '/widgets/main_app_ui.dart';
-import '/services/clipboard_service.dart';
+import '../services/clipboard_service.dart';
+import '../services/toast_service.dart';
+import '../models/clipboard_processing_result.dart';
+import '../widgets/main_app_ui.dart';
+import '../widgets/comparison_bottom_sheet.dart';
 
 class TextFixerHomeScreen extends StatefulWidget {
+  const TextFixerHomeScreen({super.key});
+
   @override
-  _TextFixerHomeScreenState createState() => _TextFixerHomeScreenState();
+  State<TextFixerHomeScreen> createState() => _TextFixerHomeScreenState();
 }
 
 class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
@@ -17,7 +21,13 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
 
   String? _apiKey;
   bool _isFromTextSelection = false;
-  bool _isProcessing = false;
+
+  // Bottom sheet state
+  String? _originalIntentText;
+  String? _fixedIntentText;
+  ClipboardProcessingResult? _result;
+  bool _isRefixing = false;
+  StateSetter? _modalSetState;
 
   @override
   void initState() {
@@ -46,146 +56,145 @@ class _TextFixerHomeScreenState extends State<TextFixerHomeScreen> {
       if (intentText != null && intentText.isNotEmpty) {
         setState(() {
           _isFromTextSelection = true;
+          _originalIntentText = intentText;
         });
 
         if (_apiKey != null) {
-          await _processTextWithLoading(intentText);
-        } else {
-          _showSetupDialog();
+          // Process text directly without modal
+          _processIntentText(intentText);
         }
+        // If no API key, the user will see the setup form inline on the main screen
       }
     } catch (e) {
       // Silently handle intent processing errors
     }
   }
 
-  Future<void> _processTextWithLoading(String text) async {
+  // Removed _showComparisonBottomSheet method as modal is no longer used
+
+  Future<void> _processIntentText(String text) async {
     if (!mounted) return;
 
-    setState(() {
-      _isProcessing = true;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    const minimumDisplayTime = Duration(seconds: 2);
-    final startTime = DateTime.now();
-
     try {
-      await _textProcessingService.processTextWithoutClosing(text);
+      setState(() {
+        _fixedIntentText = null;
+        _result = null;
+      });
 
-      final elapsed = DateTime.now().difference(startTime);
-      if (elapsed < minimumDisplayTime) {
-        await Future.delayed(minimumDisplayTime - elapsed);
-      }
+      final result = await _textProcessingService.refixText(text);
 
       if (mounted) {
         setState(() {
-          _isProcessing = false;
+          _fixedIntentText = result.fixedText;
+          _result = result;
         });
+        // Trigger modal rebuild with new data
+        _modalSetState?.call(() {});
       }
-
-      await Future.delayed(const Duration(milliseconds: 1500));
-      IntentService.closeApp();
     } catch (e) {
-      final elapsed = DateTime.now().difference(startTime);
-      const minimumErrorTime = Duration(milliseconds: 1500);
-
-      if (elapsed < minimumErrorTime) {
-        await Future.delayed(minimumErrorTime - elapsed);
-      }
-
       if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
+        // Trigger modal rebuild to show error state
+        _modalSetState?.call(() {});
       }
-
-      await Future.delayed(const Duration(milliseconds: 2500));
-      IntentService.closeApp();
+      // Error already shown by service
     }
   }
 
-  void _showSetupDialog() {
+  Future<void> _handleRefix(String editedText) async {
     if (!mounted) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => SetupDialog(
-        isFromTextSelection: _isFromTextSelection,
-        onApiKeySaved: () async {
-          await _loadApiKey();
-          if (_isFromTextSelection) {
-            final intentText = await IntentService.getIntentText();
-            if (intentText != null) {
-              await _processTextWithLoading(intentText);
-            }
-          }
-        },
-      ),
-    );
+    try {
+      setState(() {
+        _isRefixing = true;
+      });
+      // Trigger modal rebuild to show refixing state
+      _modalSetState?.call(() {});
+
+      final result = await _textProcessingService.refixText(editedText);
+
+      if (mounted) {
+        setState(() {
+          _fixedIntentText = result.fixedText;
+          _result = result;
+          _isRefixing = false;
+        });
+        // Trigger modal rebuild with new data
+        _modalSetState?.call(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRefixing = false;
+        });
+        // Trigger modal rebuild to show error state
+        _modalSetState?.call(() {});
+      }
+      // Error already shown by service
+    }
+  }
+
+  Future<void> _handleCopy() async {
+    if (_fixedIntentText == null) return;
+
+    try {
+      await ClipboardService.setClipboardText(_fixedIntentText!);
+      ToastService.showSuccessLong(
+        _result?.userMessage ?? 'Text copied to clipboard!',
+      );
+
+      // Auto-close app after short delay
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+        await Future.delayed(const Duration(milliseconds: 300));
+        IntentService.closeApp();
+      }
+    } catch (e) {
+      ToastService.showError('Failed to copy text');
+    }
+  }
+
+  void _handleClose() {
+    if (mounted) {
+      Navigator.of(context).pop(); // Close bottom sheet
+      Future.delayed(const Duration(milliseconds: 300), () {
+        IntentService.closeApp();
+      });
+    }
+  }
+
+  Future<void> _handleApiKeySaved() async {
+    await _loadApiKey();
+    if (_isFromTextSelection && _originalIntentText != null) {
+        _processIntentText(_originalIntentText!);
+      }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isFromTextSelection) {
       return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: _isProcessing ? _buildLoadingOverlay() : const SizedBox.shrink(),
+        backgroundColor: Colors.transparent,  // Keep transparent for overlay effect
+        body: SafeArea(
+          child: Align(
+            alignment: Alignment.bottomCenter,  // Position like a bottom sheet
+            child: ComparisonBottomSheet(
+              originalText: _originalIntentText!,
+              fixedText: _fixedIntentText,
+              result: _result,
+              onRefix: _handleRefix,
+              onCopy: _handleCopy,
+              onClose: _handleClose,
+              isRefixing: _isRefixing,
+            ),
+          ),
+        ),
       );
     }
 
     return MainAppUI(
       apiKey: _apiKey,
-      onSetupRequested: _showSetupDialog,
-    );
-  }
-
-  Widget _buildLoadingOverlay() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.black.withOpacity(0.1),
-      child: Center(
-        child: Container(
-          width: 100,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 30,
-                height: 30,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA45C40)),
-                  strokeWidth: 3,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Fixing...',
-                style: TextStyle(
-                  color: Color(0xFF4A3933),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      onApiKeySaved: _handleApiKeySaved,
     );
   }
 }

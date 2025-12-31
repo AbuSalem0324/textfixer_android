@@ -86,6 +86,11 @@ class TextProcessingService {
         model: result['model'],
         originalLength: result['originalLength'],
         fixedLength: result['fixedLength'],
+        // V2 Backend usage tracking data
+        usageSummary: result['usageSummary'],
+        remainingQuota: result['remainingQuota'],
+        limits: result['limits'],
+        subscriptionTier: result['subscriptionTier'],
       );
     } catch (e) {
       _handleAndRethrowError(e);
